@@ -1,6 +1,6 @@
 # Visual Explainer Skill
 
-A Claude Code skill that converts any content into stunning visual explanations — whiteboard sketches, professional infographics, presentation slides, technical diagrams, and mind maps — powered by OpenAI's gpt-image-1.5 model.
+A Claude Code skill that converts any content into stunning visual explanations — whiteboard sketches, professional infographics, presentation slides, technical diagrams, and mind maps — powered by OpenAI's gpt-image-1.5 or Google Gemini's Nano Banana 2.
 
 ## About
 
@@ -142,6 +142,24 @@ sequenceDiagram
 ```
 </details>
 
+### Backend Comparison — How a CPU Executes an Instruction
+
+Same topic, same style, same prompt — rendered by both backends for comparison.
+
+| OpenAI (gpt-image-1.5) | Gemini (Nano Banana 2) |
+|---|---|
+| <img src="examples/11-backend-comparison/openai-cpu-whiteboard.png" width="400" alt="OpenAI: CPU Instruction Cycle"> | <img src="examples/11-backend-comparison/gemini-cpu-whiteboard.png" width="400" alt="Gemini: CPU Instruction Cycle"> |
+
+| | OpenAI | Gemini |
+|---|---|---|
+| **Dimensions** | 1536x1024 (exact) | 1024x1024 (ignores size request) |
+| **Text clarity** | Clean, all legible | Clean, all legible |
+| **Style fidelity** | Polished whiteboard texture, subtle details | Bolder colors, stronger section borders |
+| **Size control** | Honors exact dimensions | Always produces square output |
+| **Cost** | ~$0.29/image | Free tier available |
+
+Both backends produce quality results from the same prompt. OpenAI gives more control over dimensions and a more refined aesthetic. Gemini is solid and has a free tier but doesn't respect size parameters.
+
 ## Prerequisites
 
 ### 1. Claude Code
@@ -152,37 +170,42 @@ Install Claude Code if you haven't already:
 npm install -g @anthropic-ai/claude-code
 ```
 
-### 2. OpenAI API Key
+### 2. Image Generation API Key
 
-This skill uses OpenAI's image generation API. You'll need an API key:
+You need at least one of the following. If both are set, OpenAI is used by default (override with `--backend gemini`).
 
-1. Go to [platform.openai.com](https://platform.openai.com/)
-2. Sign in or create an account
-3. Navigate to **API keys** (Settings > API keys, or [platform.openai.com/api-keys](https://platform.openai.com/api-keys))
-4. Click **Create new secret key**, give it a name, and copy the key
+#### Option A: OpenAI (gpt-image-1.5)
 
-Set the key as an environment variable:
+1. Go to [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
+2. Create a new secret key and copy it
 
-**macOS / Linux (current session):**
 ```bash
 export OPENAI_API_KEY="sk-..."
 ```
 
-**Persist across sessions** by adding it to your shell profile:
+#### Option B: Google Gemini (Nano Banana 2)
+
+1. Go to [aistudio.google.com/apikey](https://aistudio.google.com/apikey)
+2. Create an API key and copy it
+
+```bash
+export GEMINI_API_KEY="AIza..."
+```
+
+#### Persist across sessions
+
+Add your key(s) to your shell profile:
 
 ```bash
 # For zsh (~/.zshrc)
 echo 'export OPENAI_API_KEY="sk-..."' >> ~/.zshrc
+echo 'export GEMINI_API_KEY="AIza..."' >> ~/.zshrc
 source ~/.zshrc
 
 # For bash (~/.bashrc or ~/.bash_profile)
 echo 'export OPENAI_API_KEY="sk-..."' >> ~/.bashrc
+echo 'export GEMINI_API_KEY="AIza..."' >> ~/.bashrc
 source ~/.bashrc
-```
-
-**Verify it's set:**
-```bash
-echo $OPENAI_API_KEY
 ```
 
 ### 3. jq
@@ -285,6 +308,9 @@ cp skill/visual-explainer.md ~/clawd/skills/visual-explainer/SKILL.md
 
 # Clean, data-oriented XMind-style mind map
 /visual-explainer --style mindmap-structured Project management methodologies
+
+# Use Gemini instead of OpenAI
+/visual-explainer --backend gemini How the water cycle works
 ```
 
 ### Converting Mermaid diagrams
@@ -367,6 +393,7 @@ Review the src/ directory structure and key modules, then /visual-explainer --st
 | `--size` | `1024x1024`, `1536x1024`, `1024x1536` | Style-dependent | Image dimensions |
 | `--mode` | `single`, `multi-frame` | `single` | One image or a progressive series |
 | `--from` | `mermaid`, `mermaid-file PATH` | (none) | Parse Mermaid input (inline or from a file) |
+| `--backend` | `openai`, `gemini` | Auto-detected | Image generation backend. Auto-detects based on available API keys. |
 | `--output` | Directory path | `./` | Where to save generated images |
 | `--prefix` | String | `visual-explainer` | Filename prefix |
 
@@ -383,19 +410,24 @@ Review the src/ directory structure and key modules, then /visual-explainer --st
 
 ## How It Works
 
-1. **Content analysis** — The skill deeply analyzes your input to extract core concepts, sub-topics, relationships, visual metaphors, and an optimal layout strategy
-2. **Prompt construction** — A detailed 400-800 word prompt is built using style-specific templates that specify exact spatial positions, icons, colors, typography, connections, and decorative elements
-3. **Image generation** — The prompt is sent to OpenAI's gpt-image-1.5 at high quality
-4. **Structured output** — A text summary of sections and relationships is also provided alongside the image
+1. **Backend detection** — Auto-detects available API keys (OpenAI or Gemini) and reports which backend will be used
+2. **Content analysis** — The skill deeply analyzes your input to extract core concepts, sub-topics, relationships, visual metaphors, and an optimal layout strategy
+3. **Prompt construction** — A detailed 400-800 word prompt is built using style-specific templates that specify exact spatial positions, icons, colors, typography, connections, and decorative elements
+4. **Image generation** — The prompt is sent to OpenAI gpt-image-1.5 or Gemini Nano Banana 2
+5. **Structured output** — A text summary of sections, relationships, and backend used is provided alongside the image
 
 ## Cost
 
-Image generation uses the OpenAI API which has per-image costs:
+### OpenAI (gpt-image-1.5)
 
 | Size | Estimated Cost |
 |------|---------------|
 | 1024x1024 | ~$0.19 |
 | 1536x1024 / 1024x1536 | ~$0.29 |
+
+### Gemini (Nano Banana 2)
+
+Free tier available. Check current pricing at [aistudio.google.com](https://aistudio.google.com/).
 
 Multi-frame mode generates multiple images (3-5), so costs multiply accordingly.
 
@@ -416,8 +448,18 @@ Multi-frame mode generates multiple images (3-5), so costs multiply accordingly.
 
 | Version | Date | Description |
 |---------|------|-------------|
+| 1.2.0 | 2026-04-02 | Gemini/Nano Banana 2 backend support |
 | 1.1.0 | 2026-04-01 | Mermaid diagram conversion support |
 | 1.0.0 | 2026-04-01 | Initial release |
+
+### v1.2.0 — Gemini Backend Support
+
+- `--backend` flag to choose between `openai` (gpt-image-1.5) and `gemini` (Nano Banana 2)
+- Auto-detection: uses whichever API key is available; defaults to OpenAI if both are set
+- Backend reported before generation and in structured output summary
+- Gemini API integration via `generativelanguage.googleapis.com`
+- Size handling adapted for Gemini (dimensions included in prompt text)
+- Updated prerequisites to support either `OPENAI_API_KEY` or `GEMINI_API_KEY`
 
 ### v1.1.0 — Mermaid Diagram Conversion
 

@@ -52,8 +52,16 @@ check: ## Verify skill files and dependencies
 		echo "Error: $(METADATA_FILE) not found"; exit 1; \
 	fi
 	@command -v jq >/dev/null 2>&1 || { echo "Error: jq is required (brew install jq)"; exit 1; }
-	@if [ -z "$$OPENAI_API_KEY" ]; then \
-		echo "Warning: OPENAI_API_KEY is not set. The skill will not work without it."; \
+	@if [ -z "$$OPENAI_API_KEY" ] && [ -z "$$GEMINI_API_KEY" ]; then \
+		echo "Warning: No image generation API key found. Set at least one:"; \
+		echo "  export OPENAI_API_KEY=\"sk-...\"    # from platform.openai.com"; \
+		echo "  export GEMINI_API_KEY=\"AIza...\"   # from aistudio.google.com/apikey"; \
+	elif [ -n "$$OPENAI_API_KEY" ] && [ -n "$$GEMINI_API_KEY" ]; then \
+		echo "API keys: OpenAI (set), Gemini (set) — default backend: OpenAI"; \
+	elif [ -n "$$OPENAI_API_KEY" ]; then \
+		echo "API key: OpenAI (set)"; \
+	else \
+		echo "API key: Gemini (set)"; \
 	fi
 	@echo "All checks passed"
 

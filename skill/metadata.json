@@ -1,7 +1,7 @@
 {
   "name": "visual-explainer",
   "version": "1.0.0",
-  "description": "Generate visual explanations (whiteboard, infographic, presentation, diagram, mindmap) from any content using OpenAI image generation",
+  "description": "Generate visual explanations (whiteboard, infographic, presentation, diagram, mindmap) from any content using OpenAI or Gemini image generation",
   "author": {
     "name": "Eric Blue",
     "url": "https://eric-blue.com"
@@ -16,14 +16,16 @@
     "mindmap",
     "diagram",
     "image-generation",
-    "openai"
+    "openai",
+    "gemini"
   ],
   "dependencies": {
     "runtime": [
       "jq"
     ],
     "env": [
-      "OPENAI_API_KEY"
+      "OPENAI_API_KEY",
+      "GEMINI_API_KEY"
     ],
     "skills": [
       "generate-images"

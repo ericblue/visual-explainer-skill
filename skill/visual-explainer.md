@@ -1,6 +1,6 @@
 ---
 name: visual-explainer
-description: Generate visual explanations (whiteboard, infographic, presentation, diagram, mindmap) from any content using OpenAI image generation. Use when the user wants to visualize, explain visually, create an infographic, draw a mind map, or make a whiteboard sketch of a topic.
+description: Generate visual explanations (whiteboard, infographic, presentation, diagram, mindmap) from any content using OpenAI or Gemini image generation. Use when the user wants to visualize, explain visually, create an infographic, draw a mind map, or make a whiteboard sketch of a topic.
 argument-hint: "[--style whiteboard|infographic|presentation|diagram|mindmap|mindmap-structured] [--draw-level sketch|normal|polished] [--complexity simple|moderate|detailed] <content>"
 allowed-tools: Bash, Read, Write, Glob, Grep
 ---
@@ -19,6 +19,7 @@ Generate a visual explanation (whiteboard, infographic, presentation, diagram, o
 - `/visual-explainer --draw-level polished --style whiteboard React component lifecycle`
 - `/visual-explainer --style infographic --from mermaid` — convert a Mermaid diagram into a polished infographic
 - `/visual-explainer --style whiteboard --from mermaid-file docs/architecture.mmd` — read a .mmd file and convert it
+- `/visual-explainer --backend gemini How the water cycle works` — use Gemini/Nano Banana 2 instead of OpenAI
 
 ## Arguments
 
@@ -36,6 +37,7 @@ The argument string is available as `$ARGUMENTS`. Parse it according to these ru
 | `--prefix NAME` | `visual-explainer` | Filename prefix |
 | `--mode M` | `single` | `single` (one image) or `multi-frame` (series of images building up the concept) |
 | `--from F` | (none) | Input source: `mermaid` (inline Mermaid in content or clipboard), `mermaid-file PATH` (read from a .mmd/.md file) |
+| `--backend B` | auto-detected | Image generation backend: `openai` (gpt-image-1.5) or `gemini` (Nano Banana 2). Auto-detects based on available API keys if not specified. |
 
 ### Everything else is the content
 
@@ -43,11 +45,38 @@ After extracting flags, join the remaining text as the content to visualize.
 
 ## Steps
 
-### Step 1: Validate prerequisites
+### Step 1: Validate prerequisites and detect backend
 
-- Confirm the `/generate-images` skill is available (it should be — it's a sibling command)
-- Check that `OPENAI_API_KEY` is set
 - If no content is provided, ask the user what they want to visualize and stop
+- Check that `jq` is available
+
+**Backend detection** (in priority order):
+
+1. If `--backend openai` is specified, use OpenAI. Require `OPENAI_API_KEY`.
+2. If `--backend gemini` is specified, use Gemini. Require `GEMINI_API_KEY`.
+3. If `--backend` is NOT specified, auto-detect:
+   - If only `OPENAI_API_KEY` is set, use OpenAI
+   - If only `GEMINI_API_KEY` is set, use Gemini
+   - If BOTH are set, use OpenAI (default)
+   - If NEITHER is set, stop with setup instructions for both:
+     ```
+     No image generation API key found. Set one of:
+       export OPENAI_API_KEY="sk-..."    # from platform.openai.com
+       export GEMINI_API_KEY="AIza..."   # from aistudio.google.com/apikey
+     ```
+
+**Report the selected backend** immediately after detection:
+```
+Backend: OpenAI gpt-image-1.5 (auto-detected — OPENAI_API_KEY is set)
+```
+or
+```
+Backend: Gemini Nano Banana 2 (auto-detected — only GEMINI_API_KEY is set)
+```
+or if explicitly set:
+```
+Backend: Gemini Nano Banana 2 (--backend gemini)
+```
 
 ### Step 1b: Detect and parse Mermaid input
 
@@ -448,9 +477,14 @@ Determine the appropriate image size based on style (unless overridden):
 - `mindmap`: `1536x1024` (landscape)
 - `mindmap-structured`: `1536x1024` (landscape)
 
-Call the generate-images skill internally by running the equivalent process:
+**Report before generating:**
+```
+Generating with: <Backend Name> (<size>, high quality)
+```
 
-1. Use `curl` to call the OpenAI API directly (same as generate-images does):
+### If backend is OpenAI (gpt-image-1.5):
+
+1. Call the OpenAI API:
 
 ```bash
 curl -s -X POST "https://api.openai.com/v1/images/generations" \
@@ -470,7 +504,44 @@ curl -s -X POST "https://api.openai.com/v1/images/generations" \
 echo '<response>' | jq -r '.data[0].b64_json' | base64 --decode > <output_dir>/<prefix>-<n>.png
 ```
 
-3. Always use `quality: "high"` for best results (these are detailed visuals).
+### If backend is Gemini (Nano Banana 2):
+
+1. Call the Gemini API:
+
+```bash
+curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent?key=$GEMINI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "contents": [
+      {
+        "parts": [
+          {"text": "<the constructed prompt>"}
+        ]
+      }
+    ],
+    "generationConfig": {
+      "responseModalities": ["TEXT", "IMAGE"]
+    }
+  }'
+```
+
+2. Extract and save the image. The response contains image data in `candidates[0].content.parts`. Find the part where `inlineData` exists:
+```bash
+echo '<response>' | jq -r '.candidates[0].content.parts[] | select(.inlineData) | .inlineData.data' | base64 --decode > <output_dir>/<prefix>-<n>.png
+```
+
+3. Note: Gemini returns the image MIME type in `.inlineData.mimeType` (usually `image/png`). Use the appropriate file extension.
+
+### Size handling differences:
+
+- **OpenAI**: Supports exactly `1024x1024`, `1536x1024`, `1024x1536`. Pass the size directly.
+- **Gemini**: Does not accept a size parameter in the same way. Include the desired dimensions in the prompt text itself (e.g., "Create a 1536x1024 landscape image..."). The model will approximate the requested dimensions.
+
+### Quality:
+
+- Always aim for highest quality on both backends.
+- OpenAI: set `"quality": "high"`.
+- Gemini: quality is controlled by the model tier and prompt detail. The detailed prompts this skill generates are already optimized for high quality output.
 
 ## Step 6: Generate structured text companion
 
@@ -479,7 +550,7 @@ After generating the image, also output a structured text summary in this format
 ```
 ## Visual Explainer: [Title]
 
-**Style:** [style] | **Draw Level:** [draw-level] | **Complexity:** [complexity]
+**Style:** [style] | **Backend:** [OpenAI gpt-image-1.5 or Gemini Nano Banana 2] | **Draw Level:** [draw-level] | **Complexity:** [complexity]
 
 ### Sections
 1. **[Section Title]** — [brief description]
@@ -524,16 +595,18 @@ If any item is missing, add it before generating.
 
 ## Error Handling
 
-- If `OPENAI_API_KEY` is not set, stop immediately with instructions
+- If no API key is available (neither `OPENAI_API_KEY` nor `GEMINI_API_KEY`), stop with setup instructions for both
+- If `--backend` is specified but the corresponding API key is missing, stop with instructions for that specific key
 - If `jq` is not available, stop with install instructions
 - If no content is provided, ask the user what to visualize
-- If the API returns an error, report it and suggest the user try simplifying the content
+- If the API returns an error, report it and suggest the user try simplifying the content or switching backends
 - If the content is too complex for the chosen complexity level, suggest upgrading to `detailed`
 
 ## Notes
 
 - The prompt engineering is the primary value of this skill — spend time on analysis and prompt construction
-- Always use `quality: "high"` — these are meant to be premium visuals
+- The same prompts work across both backends; the style templates are backend-agnostic
+- Always use `quality: "high"` (OpenAI) — these are meant to be premium visuals
 - For best results with text-heavy content, prefer `infographic` style
 - For process/flow content, prefer `diagram` style
 - For engaging/fun explanations, prefer `whiteboard` style
@@ -542,4 +615,5 @@ If any item is missing, add it before generating.
 - Use `mindmap-structured` when the audience values precision, data density, and professional presentation
 - The `draw-level` parameter only significantly affects `whiteboard` and `presentation` styles
 - Multi-frame mode costs more (one API call per frame) — warn the user about cost
-- Estimated cost: ~$0.19 per image at high quality, 1024x1024. Larger sizes ~$0.29
+- Estimated cost (OpenAI): ~$0.19 per image at high quality, 1024x1024. Larger sizes ~$0.29
+- Estimated cost (Gemini): Free tier available; check current pricing at aistudio.google.com
