@@ -197,16 +197,26 @@ brew install jq
 sudo apt-get install jq
 ```
 
+## Compatibility
+
+This skill was primarily developed and tested with **Claude Code**, but it should work with any Skills-compatible agent or CLI tool that supports markdown skill definitions, including:
+
+- **[Claude Code](https://claude.ai/code)** (primary target)
+- **[OpenClaw](https://github.com/ericblue/openclaw)** (tested)
+- Any agent that reads `.md` skill files with YAML frontmatter
+
+The skill is a self-contained markdown file with structured instructions. Any agent that can parse the frontmatter, read the step-by-step instructions, and execute shell commands (curl, jq, base64) can run it.
+
 ## Installation
 
-**Using Make (recommended):**
+### Claude Code
 
 ```bash
 git clone <repo-url> && cd visual-explainer-skill
 make install
 ```
 
-**Manual:**
+Or manually:
 
 ```bash
 cp skill/visual-explainer.md ~/.claude/commands/visual-explainer.md
@@ -214,12 +224,31 @@ cp skill/visual-explainer.md ~/.claude/commands/visual-explainer.md
 
 The skill will be available immediately as `/visual-explainer` in any Claude Code session.
 
+### OpenClaw
+
+```bash
+make openclaw-install
+```
+
+Or manually:
+
+```bash
+mkdir -p ~/clawd/skills/visual-explainer
+cp skill/visual-explainer.md ~/clawd/skills/visual-explainer/SKILL.md
+```
+
 ### Makefile targets
 
 | Target | Description |
 |--------|-------------|
-| `make install` | Install the skill to `~/.claude/commands/` |
-| `make uninstall` | Remove the skill from `~/.claude/commands/` |
+| **Claude Code** | |
+| `make install` | Install to `~/.claude/commands/` |
+| `make uninstall` | Remove from `~/.claude/commands/` |
+| **OpenClaw** | |
+| `make openclaw-install` | Install to `~/clawd/skills/` |
+| `make openclaw-uninstall` | Remove from `~/clawd/skills/` |
+| `make openclaw-check` | Check install status |
+| **General** | |
 | `make info` | Show skill name, version, author, and available styles |
 | `make version` | Print the current version |
 | `make check` | Verify prerequisites (jq, skill files, OPENAI_API_KEY) |

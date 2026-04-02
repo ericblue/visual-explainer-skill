@@ -45,9 +45,10 @@ If you maintain a changelog, add an entry for the new version describing what ch
 
 ```bash
 make install            # installs to ~/.claude/commands/
+make openclaw-install   # installs to ~/clawd/skills/ (if using OpenClaw)
 ```
 
-Open a new Claude Code session and verify `/visual-explainer` works as expected.
+Open a new Claude Code (or OpenClaw) session and verify `/visual-explainer` works as expected.
 
 ### 5. Commit, tag, and push
 
