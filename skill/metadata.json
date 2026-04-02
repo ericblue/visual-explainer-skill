@@ -1,0 +1,41 @@
+{
+  "name": "visual-explainer",
+  "version": "1.0.0",
+  "description": "Generate visual explanations (whiteboard, infographic, presentation, diagram, mindmap) from any content using OpenAI image generation",
+  "author": {
+    "name": "Eric Blue",
+    "url": "https://eric-blue.com"
+  },
+  "license": "MIT",
+  "created": "2026-04-01",
+  "updated": "2026-04-02",
+  "keywords": [
+    "visual-explainer",
+    "whiteboard",
+    "infographic",
+    "mindmap",
+    "diagram",
+    "image-generation",
+    "openai"
+  ],
+  "dependencies": {
+    "runtime": [
+      "jq"
+    ],
+    "env": [
+      "OPENAI_API_KEY"
+    ],
+    "skills": [
+      "generate-images"
+    ]
+  },
+  "styles": [
+    "whiteboard",
+    "infographic",
+    "presentation",
+    "diagram",
+    "mindmap",
+    "mindmap-structured"
+  ],
+  "entry": "visual-explainer.md"
+}
