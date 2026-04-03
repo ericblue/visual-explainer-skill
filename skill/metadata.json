@@ -1,6 +1,6 @@
 {
   "name": "visual-explainer",
-  "version": "1.0.0",
+  "version": "1.3.0",
   "description": "Generate visual explanations (whiteboard, infographic, presentation, diagram, mindmap, mockup) from any content using OpenAI or Gemini image generation",
   "author": {
     "name": "Eric Blue",
@@ -8,7 +8,7 @@
   },
   "license": "MIT",
   "created": "2026-04-01",
-  "updated": "2026-04-02",
+  "updated": "2026-04-03",
   "keywords": [
     "visual-explainer",
     "whiteboard",
