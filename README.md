@@ -1,6 +1,6 @@
 # Visual Explainer Skill
 
-A Claude Code skill that converts any content into stunning visual explanations — whiteboard sketches, professional infographics, presentation slides, technical diagrams, and mind maps — powered by OpenAI's gpt-image-1.5 or Google Gemini's Nano Banana 2.
+A Claude Code skill that converts any content into stunning visual explanations — whiteboard sketches, professional infographics, presentation slides, technical diagrams, mind maps, and UI wireframe mockups — powered by OpenAI's gpt-image-1.5 or Google Gemini's Nano Banana 2.
 
 ## About
 
@@ -14,7 +14,7 @@ The core insight is that image generation quality depends almost entirely on pro
 
 - **Style Spectrum** — From rough whiteboard sketches to polished infographics, with a `--draw-level` parameter to control exactly where on the hand-drawn-to-professional spectrum the output lands
 - **Deep Content Analysis** — Every generation starts with structured extraction of concepts, relationships, visual metaphors, and layout strategy before any prompt is written
-- **Prompt Engineering as the Product** — The skill's value is in its style-specific prompt templates, not just API wrappers. Each style (whiteboard, infographic, presentation, diagram, mindmap, mindmap-structured) has a comprehensive template tuned for that visual language
+- **Prompt Engineering as the Product** — The skill's value is in its style-specific prompt templates, not just API wrappers. Each style (whiteboard, infographic, presentation, diagram, mindmap, mindmap-structured, mockup) has a comprehensive template tuned for that visual language
 - **Composable with Documents** — Works naturally with Claude Code's ability to read files, so you can point it at any existing doc, spec, or codebase and generate visuals from it
 
 ### Author
@@ -159,6 +159,19 @@ Same topic, same style, same prompt — rendered by both backends for comparison
 | **Cost** | ~$0.29/image | Free tier available |
 
 Both backends produce quality results from the same prompt. OpenAI gives more control over dimensions and a more refined aesthetic. Gemini is solid and has a free tier but doesn't respect size parameters.
+
+### Mockup — Admin Dashboard (Desktop)
+
+Polished, Figma-quality UI wireframe with `--style mockup --device desktop` — browser chrome, sidebar navigation, stats cards, charts, and data table.
+
+<img src="examples/12-mockup-dashboard/visual-explainer-1.png" width="600" alt="Mockup: Admin Dashboard">
+
+The mockup style supports three device frames (`--device mobile|desktop|tablet`) and three fidelity levels via `--draw-level`:
+- **sketch** — hand-drawn wireframe, great for brainstorming and design sprints
+- **normal** — mid-fidelity, clean enough to share with stakeholders
+- **polished** — Figma/Sketch-quality, pixel-perfect precision for design reviews
+
+Use cases: rapid wireframing from PRDs, brainstorming UI layouts, visualizing modernized interfaces for existing code, stakeholder alignment before opening Figma.
 
 ## Prerequisites
 
@@ -309,6 +322,15 @@ cp skill/visual-explainer.md ~/clawd/skills/visual-explainer/SKILL.md
 # Clean, data-oriented XMind-style mind map
 /visual-explainer --style mindmap-structured Project management methodologies
 
+# UI wireframe mockup (mobile, polished by default)
+/visual-explainer --style mockup A mobile app login screen with email, password, social login, and forgot password
+
+# Desktop web app wireframe
+/visual-explainer --style mockup --device desktop An admin dashboard with sidebar nav, stats cards, charts, and data table
+
+# Hand-drawn wireframe for brainstorming
+/visual-explainer --style mockup --draw-level sketch A settings page with profile photo, name fields, toggles, and save button
+
 # Use Gemini instead of OpenAI
 /visual-explainer --backend gemini How the water cycle works
 ```
@@ -387,7 +409,8 @@ Review the src/ directory structure and key modules, then /visual-explainer --st
 
 | Option | Values | Default | Description |
 |--------|--------|---------|-------------|
-| `--style` | `whiteboard`, `infographic`, `presentation`, `diagram`, `mindmap`, `mindmap-structured` | `whiteboard` | Visual style |
+| `--style` | `whiteboard`, `infographic`, `presentation`, `diagram`, `mindmap`, `mindmap-structured`, `mockup` | `whiteboard` | Visual style |
+| `--device` | `mobile`, `desktop`, `tablet` | `mobile` | Device frame for mockup style |
 | `--draw-level` | `sketch`, `normal`, `polished` | `normal` | Hand-drawn roughness vs clean precision |
 | `--complexity` | `simple`, `moderate`, `detailed` | `moderate` | Number of concepts (3-4, 5-7, or 8-12) |
 | `--size` | `1024x1024`, `1536x1024`, `1024x1536` | Style-dependent | Image dimensions |
@@ -407,6 +430,8 @@ Review the src/ directory structure and key modules, then /visual-explainer --st
 | Diagram | 1024x1024 | Square |
 | Mind Map | 1536x1024 | Landscape |
 | Mind Map (Structured) | 1536x1024 | Landscape |
+| Mockup (mobile/tablet) | 1024x1536 | Portrait |
+| Mockup (desktop) | 1536x1024 | Landscape |
 
 ## How It Works
 
@@ -439,6 +464,8 @@ Multi-frame mode generates multiple images (3-5), so costs multiply accordingly.
 - **Hierarchical/categorical content** works best with `mindmap` (colorful) or `mindmap-structured` (data-oriented)
 - Use `mindmap` when the audience values visual appeal and creativity
 - Use `mindmap-structured` for board presentations, strategy docs, or data-heavy taxonomies
+- **UI wireframes and screen layouts** work best with `mockup` style — use `--device` to match the target platform
+- Use `mockup --draw-level sketch` for early brainstorming, `--draw-level polished` for stakeholder-ready wireframes
 - Use `--draw-level sketch` for a casual, brainstormy feel
 - Use `--draw-level polished` for clean hand-lettering on whiteboard style
 - Use `--complexity detailed` when you need comprehensive coverage
@@ -448,9 +475,19 @@ Multi-frame mode generates multiple images (3-5), so costs multiply accordingly.
 
 | Version | Date | Description |
 |---------|------|-------------|
+| 1.3.0 | 2026-04-02 | Mockup/wireframe style with device frames |
 | 1.2.0 | 2026-04-02 | Gemini/Nano Banana 2 backend support |
 | 1.1.0 | 2026-04-01 | Mermaid diagram conversion support |
 | 1.0.0 | 2026-04-01 | Initial release |
+
+### v1.3.0 — Mockup/Wireframe Style
+
+- New `mockup` style for generating UI wireframes and screen mockups
+- `--device` flag to select device frame: `mobile` (phone), `desktop` (browser window), `tablet` (iPad-style)
+- Three fidelity levels via `--draw-level`: sketch (hand-drawn), normal (mid-fi), polished (Figma-quality)
+- Comprehensive prompt template with support for navigation, input fields, buttons, cards, tables, charts, and all standard UI components
+- Annotation support for wireframe callouts and specifications
+- Ideal for rapid wireframing from PRDs, brainstorming UI layouts, and visualizing modernized interfaces
 
 ### v1.2.0 — Gemini Backend Support
 
@@ -472,7 +509,7 @@ Multi-frame mode generates multiple images (3-5), so costs multiply accordingly.
 
 ### v1.0.0 — Initial Release
 
-- 6 visual styles: whiteboard, infographic, presentation, diagram, mindmap, mindmap-structured
+- 6 visual styles at launch: whiteboard, infographic, presentation, diagram, mindmap, mindmap-structured
 - `--draw-level` parameter (sketch, normal, polished) for hand-drawn vs professional spectrum
 - `--complexity` parameter (simple, moderate, detailed) for content density control
 - `--mode multi-frame` for progressive build-up explanations

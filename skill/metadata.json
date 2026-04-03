@@ -1,7 +1,7 @@
 {
   "name": "visual-explainer",
   "version": "1.0.0",
-  "description": "Generate visual explanations (whiteboard, infographic, presentation, diagram, mindmap) from any content using OpenAI or Gemini image generation",
+  "description": "Generate visual explanations (whiteboard, infographic, presentation, diagram, mindmap, mockup) from any content using OpenAI or Gemini image generation",
   "author": {
     "name": "Eric Blue",
     "url": "https://eric-blue.com"
@@ -14,6 +14,8 @@
     "whiteboard",
     "infographic",
     "mindmap",
+    "mockup",
+    "wireframe",
     "diagram",
     "image-generation",
     "openai",
@@ -37,7 +39,8 @@
     "presentation",
     "diagram",
     "mindmap",
-    "mindmap-structured"
+    "mindmap-structured",
+    "mockup"
   ],
   "entry": "visual-explainer.md"
 }
